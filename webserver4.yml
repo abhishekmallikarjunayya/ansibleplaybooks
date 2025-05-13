@@ -1,0 +1,55 @@
+---
+- name: Play 1 - Setup Apache Web Server
+  hosts: all
+  user: opc
+  become: true
+
+  tasks:
+    - name: Install httpd package
+      yum:
+        name: httpd
+        state: present
+
+    - name: Copy custom index.html to web root
+      copy:
+        src: files/index.html
+        dest: /var/www/html/index.html
+      notify: restart httpd
+
+    - name: Ensure httpd is started and enabled
+      service:
+        name: httpd
+        state: started
+        enabled: true
+
+  handlers:
+    - name: restart httpd
+      service:
+        name: httpd
+        state: restarted
+
+# ------------------------------------------
+
+- name: Play 2 - Configure Firewall
+  hosts: all
+  user: opc
+  become: true
+
+  tasks:
+    - name: Install firewalld
+      yum:
+        name: firewalld
+        state: present
+
+    - name: Allow HTTP (80/tcp) in the firewall
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes
+
+    - name: Ensure firewalld is started and enabled
+      service:
+        name: firewalld
+        state: started
+        enabled: true
